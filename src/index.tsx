@@ -1,5 +1,5 @@
-export default {
-  multiply(a: number, b: number) {
-    return Promise.resolve(a * b);
-  },
-};
+import ArrowFollow, { POSITION, HORIZONTAL, VERTICAL, ICorner } from './ArrowFollow';
+
+export type { ICorner };
+export { ArrowFollow, POSITION, HORIZONTAL, VERTICAL };
+export default ArrowFollow;
