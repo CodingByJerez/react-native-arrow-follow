@@ -1,5 +1,7 @@
 # react-native-arrow-follow
 
+<img  src=".github/image/preview.gif?raw=true" height="280" />
+
 ## Installation
 
 ### - Installing:
