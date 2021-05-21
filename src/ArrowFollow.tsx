@@ -474,9 +474,10 @@ class ArrowFollow extends Component<IProps, IState> {
   public render = (): JSX.Element => {
     const { color } = this.props;
     const { width, height, size, viewBox, route, triangleOrient, margins } = this.state;
+    const fill = color ?? 'black';
     return (
       <View style={StyleSheet.flatten([{ width, height }, ...margins])}>
-        <Svg width={width} height={height} viewBox={viewBox.join(' ')} fill={color ?? 'black'} strokeLinejoin={'round'} strokeLinecap={'butt'}>
+        <Svg width={width} height={height} viewBox={viewBox.join(' ')} fill={fill} strokeLinejoin={'round'} strokeLinecap={'butt'}>
           <Defs>
             <Marker
               id="Triangle"
@@ -489,11 +490,11 @@ class ArrowFollow extends Component<IProps, IState> {
               markerHeight="3"
               orient={triangleOrient}
             >
-              <Path fill="black" d="M 0 0 L 10 5 L 0 10 z" />
+              <Path fill={fill} d="M 0 0 L 10 5 L 0 10 z" />
             </Marker>
             <Path id={'TT'} stroke="crimson" d="M 100,75 C 125,50 150,50 175,75" />
           </Defs>
-          <Path strokeLinejoin={'round'} d={route} fill="none" stroke="black" strokeWidth={size} markerEnd="url(#Triangle)" />
+          <Path strokeLinejoin={'round'} d={route} fill="none" stroke={fill} strokeWidth={size} markerEnd="url(#Triangle)" />
         </Svg>
       </View>
     );
