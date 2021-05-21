@@ -1,17 +1,16 @@
 import * as React from 'react';
 import { Dimensions, FlatList, SafeAreaView, StyleSheet, Text, View } from 'react-native';
-import { ArrowFollow, ICorner, POSITION } from 'react-native-arrow-follow';
+import { ArrowFollow, ICorner, IDirection } from 'react-native-arrow-follow';
 
 type IData = {
-  start: { corner: ICorner; direction: POSITION | keyof typeof POSITION };
-  end: { corner: ICorner; direction: POSITION | keyof typeof POSITION };
+  start: { corner: ICorner; direction: IDirection };
+  end: { corner: ICorner; direction: IDirection };
 }[];
 
 const widthCard = Dimensions.get('window').width / 2;
 
 const DATA: IData = [
   //Type A
-
   {
     start: { corner: 'BOTTOM_LEFT', direction: 'HORIZONTAL' },
     end: { corner: 'BOTTOM_RIGHT', direction: 'HORIZONTAL' },
@@ -231,8 +230,8 @@ const styles = StyleSheet.create({
   },
   arrowContainer: {
     alignSelf: 'center',
-    //borderColor: '#000',
-    //borderWidth: 1,
+    // borderColor: '#000',
+    // borderWidth: 1,
   },
   title: {
     marginTop: 12,

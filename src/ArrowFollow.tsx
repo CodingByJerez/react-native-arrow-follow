@@ -2,7 +2,13 @@ import React, { Component } from 'react';
 import Svg, { Defs, Marker, Path } from 'react-native-svg';
 import { StyleSheet, View } from 'react-native';
 
-enum POSITION {
+enum CORNER {
+  TOP_LEFT = 'TOP_LEFT',
+  TOP_RIGHT = 'TOP_RIGHT',
+  BOTTOM_LEFT = 'BOTTOM_LEFT',
+  BOTTOM_RIGHT = 'BOTTOM_RIGHT',
+}
+enum DIRECTION {
   HORIZONTAL = 'HORIZONTAL',
   VERTICAL = 'VERTICAL',
 }
@@ -15,18 +21,21 @@ enum VERTICAL {
   BOTTOM = 'BOTTOM',
 }
 
-export type ICorner = `${VERTICAL}_${HORIZONTAL}`;
+export type ICorner = CORNER | keyof typeof CORNER; //`${VERTICAL}_${HORIZONTAL}`;
+export type IDirection = DIRECTION | keyof typeof DIRECTION;
 
 type IProps = {
   height: number;
   width: number;
   size?: number;
   color?: string;
-  start: { corner: ICorner; direction: POSITION | keyof typeof POSITION };
-  end: { corner: ICorner; direction: POSITION | keyof typeof POSITION };
+  start: { corner: ICorner; direction: IDirection };
+  end: { corner: ICorner; direction: IDirection };
 };
 
 type IState = {
+  width: number;
+  height: number;
   aspectRatio: number;
   viewBox: [number, number, number, number];
   size: number;
@@ -77,19 +86,22 @@ class ArrowFollow extends Component<IProps, IState> {
    */
   constructor(props: IProps) {
     super(props);
-    this.state = { ...this._initAspect(props), ...this._initArrow(props) };
+    this.state = { ...this._build(props) };
   }
 
   /**
    * @param {Readonly<IProps>} prevProps
    */
   public componentDidUpdate = (prevProps: Readonly<IProps>): void => {
-    if (prevProps.size !== this.props.size || prevProps.width !== this.props.width || prevProps.height !== this.props.height) {
+    if (
+      prevProps.size !== this.props.size ||
+      prevProps.width !== this.props.width ||
+      prevProps.height !== this.props.height ||
+      prevProps.start !== this.props.start ||
+      prevProps.end !== this.props.end
+    ) {
       // eslint-disable-next-line react/no-did-update-set-state
-      this.setState({ ...this._initAspect(this.props), ...this._initArrow(this.props) });
-    } else if (prevProps.start !== this.props.start || prevProps.end !== this.props.end) {
-      // eslint-disable-next-line react/no-did-update-set-state
-      this.setState((prevState) => ({ ...prevState, ...this._initArrow(this.props) }));
+      this.setState({ ...this._build(this.props) });
     }
   };
 
@@ -97,11 +109,16 @@ class ArrowFollow extends Component<IProps, IState> {
    * @param {IProps} props
    * @return {Omit<IState, "route" | "triangleOrient" | "margins">}
    */
-  private _initAspect = (props: IProps): Omit<IState, 'route' | 'triangleOrient' | 'margins'> => {
+  private _build = (props: IProps): IState => {
+    const _start: [v: VERTICAL, h: HORIZONTAL] = props.start.corner.split('_') as unknown as [v: VERTICAL, h: HORIZONTAL];
+    const _end: [v: VERTICAL, h: HORIZONTAL] = props.end.corner.split('_') as unknown as [v: VERTICAL, h: HORIZONTAL];
+
+    const { width, height } = this._geCropView(props, _start);
+
     const //
-      aspectRatio: IState['aspectRatio'] = props.height / props.width,
+      aspectRatio: IState['aspectRatio'] = height / width,
       viewBox: IState['viewBox'] = [0, 0, 1000, 1000 * aspectRatio],
-      size: IState['size'] = ((viewBox[2] / props.width) * (props.size ?? 12)) / 2;
+      size: IState['size'] = ((viewBox[2] / width) * (props.size ?? 12)) / 2;
 
     this._xl = 0;
     this._xr = viewBox[2];
@@ -110,25 +127,58 @@ class ArrowFollow extends Component<IProps, IState> {
     this._radium = viewBox[2] / 4;
     this._triangle = { width: size * 3, height: size * 3 };
 
-    return { aspectRatio, viewBox, size };
+    const triangleOrient = this._arrowOrient(_end, props.end.direction);
+    const starPoint = this._getStart(_start, props.start.direction, _end, props.end.direction);
+    const centerPoints = this._startCenter(_start, props.start.direction, _end, props.end.direction);
+    const enPoint = this._getEnd(_end, props.end.direction);
+    const margins = this._getMarginView(_start, props.start.direction, _end, props.end.direction, props.width);
+
+    return { aspectRatio, viewBox, size, route: starPoint + centerPoints + enPoint, triangleOrient, margins, width, height };
   };
 
   /**
-   * @param {{corner:ICorner, direction:POSITION | keyof typeof POSITION}} start
-   * @param {{corner:ICorner, direction:POSITION | keyof typeof POSITION}} end
-   * @param width
-   * @return {Pick<IState, "triangleOrient" | "route" | "margins">}
+   * @param {IProps} props
+   * @param {VERTICAL} startVertical
+   * @param {HORIZONTAL} startHorizontal
+   * @return {{width:number, height:number}}
    */
-  private _initArrow = ({ start, end, width }: IProps): Pick<IState, 'triangleOrient' | 'route' | 'margins'> => {
-    const _start: [v: VERTICAL, h: HORIZONTAL] = start.corner.split('_') as unknown as [v: VERTICAL, h: HORIZONTAL];
-    const _end: [v: VERTICAL, h: HORIZONTAL] = end.corner.split('_') as unknown as [v: VERTICAL, h: HORIZONTAL];
+  private _geCropView = (props: IProps, [startVertical, startHorizontal]: [v: VERTICAL, h: HORIZONTAL]): { width: number; height: number } => {
+    const size = ((1000 / props.width) * (props.size ?? 12)) / 2;
+    const triangleWidth = ((size * 3) / 1000) * props.width;
+    const triangleWidthMiddle = triangleWidth / 2;
+    const self = triangleWidth / 5;
+    let dimensionsView = {
+      width: props.width,
+      height: props.height,
+    };
 
-    const triangleOrient = this._arrowOrient(_end, end.direction as POSITION);
-    const starPoint = this._getStart(_start, start.direction as POSITION, _end, end.direction as POSITION);
-    const centerPoints = this._startCenter(_start, start.direction as POSITION, _end, end.direction as POSITION);
-    const enPoint = this._getEnd(_end, end.direction as POSITION);
-    const margins = this._getMarginView(_start, start.direction as POSITION, _end, end.direction as POSITION, width);
-    return { route: starPoint + centerPoints + enPoint, triangleOrient, margins };
+    if (props.start.direction !== props.end.direction) {
+      if (props.start.direction === DIRECTION.HORIZONTAL) {
+        if (startVertical === VERTICAL.TOP) {
+          dimensionsView.width += triangleWidthMiddle;
+          dimensionsView.height += self;
+        } else {
+          dimensionsView.width += triangleWidthMiddle;
+          dimensionsView.height += self;
+        }
+      } else {
+        if (startHorizontal === HORIZONTAL.LEFT) {
+          dimensionsView.width += self;
+          dimensionsView.height += triangleWidthMiddle;
+        } else {
+          dimensionsView.width += self;
+          dimensionsView.height += triangleWidthMiddle;
+        }
+      }
+    } else {
+      if (props.start.direction === DIRECTION.HORIZONTAL) {
+        dimensionsView.height += triangleWidthMiddle;
+      } else {
+        dimensionsView.width += triangleWidthMiddle;
+      }
+    }
+
+    return dimensionsView;
   };
 
   /**
@@ -143,52 +193,53 @@ class ArrowFollow extends Component<IProps, IState> {
    */
   private _getMarginView = (
     [startVertical, startHorizontal]: [v: VERTICAL, h: HORIZONTAL],
-    startPosition: POSITION,
+    startPosition: IDirection,
     [endVertical, endHorizontal]: [v: VERTICAL, h: HORIZONTAL],
-    endPosition: POSITION,
+    endPosition: IDirection,
     width: number
   ) => {
     const { _triangle } = this;
     const triangleWidthMiddle = (_triangle.width / 2 / this._xr) * width;
+    const self = (_triangle.width / 5 / this._xr) * width;
     const margins = [];
     if (startVertical === endVertical || startHorizontal === endHorizontal) {
-      if (startPosition === POSITION.HORIZONTAL) {
+      if (startPosition === DIRECTION.HORIZONTAL) {
         if (startVertical === VERTICAL.TOP) {
           margins.push({ top: -triangleWidthMiddle });
-        } else {
-          margins.push({ bottom: -triangleWidthMiddle });
         }
       } else {
         if (startHorizontal === HORIZONTAL.LEFT) {
           margins.push({ left: -triangleWidthMiddle });
-        } else {
-          margins.push({ right: -triangleWidthMiddle });
         }
       }
     } else if (startPosition !== endPosition) {
-      if (startPosition === POSITION.HORIZONTAL) {
-        if (startHorizontal === HORIZONTAL.LEFT) {
-          margins.push({ right: -triangleWidthMiddle });
-        } else {
+      if (startPosition === DIRECTION.HORIZONTAL) {
+        if (startVertical === VERTICAL.TOP) {
+          margins.push({ top: -self });
+        }
+        if (startHorizontal === HORIZONTAL.RIGHT) {
           margins.push({ left: -triangleWidthMiddle });
         }
       } else {
+        if (startHorizontal === HORIZONTAL.LEFT) {
+          margins.push({ left: -self });
+        }
         if (startVertical === VERTICAL.TOP) {
-          margins.push({ top: +triangleWidthMiddle });
+          margins.push({ top: -self });
         } else {
-          margins.push({ bottom: +triangleWidthMiddle });
+          margins.push({ top: -triangleWidthMiddle });
         }
       }
     } else {
-      if (startPosition === POSITION.HORIZONTAL) {
+      if (startPosition === DIRECTION.HORIZONTAL) {
         if (startVertical === VERTICAL.TOP) {
-          margins.push({ bottom: -triangleWidthMiddle });
+          margins.push({ top: -self });
         } else {
           margins.push({ top: -triangleWidthMiddle });
         }
       } else {
         if (startHorizontal === HORIZONTAL.LEFT) {
-          margins.push({ right: -triangleWidthMiddle });
+          margins.push({ left: -self });
         } else {
           margins.push({ left: -triangleWidthMiddle });
         }
@@ -209,9 +260,9 @@ class ArrowFollow extends Component<IProps, IState> {
    */
   private _getStart = (
     [startVertical, startHorizontal]: [v: VERTICAL, h: HORIZONTAL],
-    startPosition: POSITION,
+    startPosition: IDirection,
     [endVertical, endHorizontal]: [v: VERTICAL, h: HORIZONTAL],
-    _: POSITION
+    _: IDirection
   ): string => {
     const { _xl, _xr, _yt, _yb, _triangle } = this;
     const triangleWidthMiddle = _triangle.width / 2;
@@ -226,24 +277,24 @@ class ArrowFollow extends Component<IProps, IState> {
     } else {
       if (startHorizontal === HORIZONTAL.LEFT) {
         x = _xl;
-        if (startPosition === POSITION.VERTICAL) {
+        if (startPosition === DIRECTION.VERTICAL) {
           x += self;
         }
       } else {
         x = _xr;
-        if (startPosition === POSITION.VERTICAL) {
+        if (startPosition === DIRECTION.VERTICAL) {
           x -= self;
         }
       }
 
       if (startVertical === VERTICAL.TOP) {
         y = _yt;
-        if (startPosition === POSITION.HORIZONTAL) {
+        if (startPosition === DIRECTION.HORIZONTAL) {
           y += self;
         }
       } else {
         y = _yb;
-        if (startPosition === POSITION.HORIZONTAL) {
+        if (startPosition === DIRECTION.HORIZONTAL) {
           y -= self;
         }
       }
@@ -262,9 +313,9 @@ class ArrowFollow extends Component<IProps, IState> {
    */
   private _startCenter = (
     [startVertical, startHorizontal]: [v: VERTICAL, h: HORIZONTAL],
-    startPosition: POSITION,
+    startPosition: IDirection,
     [endVertical, endHorizontal]: [v: VERTICAL, h: HORIZONTAL],
-    endPosition: POSITION
+    endPosition: IDirection
   ): string => {
     const { _xl, _xr, _yt, _yb, _radium, _triangle } = this;
     const self = _triangle.width / 5;
@@ -275,28 +326,28 @@ class ArrowFollow extends Component<IProps, IState> {
       let // Bezier
         Xs: [number, number, number],
         Ys: [number, number, number];
-      if (startHorizontal === 'LEFT') {
-        if (startPosition === 'VERTICAL') {
+      if (startHorizontal === HORIZONTAL.LEFT) {
+        if (startPosition === DIRECTION.VERTICAL) {
           Xs = [_xl + self, _xl + self, _xl + _radium];
         } else {
           Xs = [_xr - triangleWidthMiddle - _radium, _xr - triangleWidthMiddle, _xr - triangleWidthMiddle];
         }
       } else {
-        if (startPosition === 'VERTICAL') {
+        if (startPosition === DIRECTION.VERTICAL) {
           Xs = [_xr - self, _xr - self, _xr - self - _radium];
         } else {
           Xs = [_xl + triangleWidthMiddle + _radium, _xl + triangleWidthMiddle, _xl + triangleWidthMiddle];
         }
       }
 
-      if (startVertical === 'TOP') {
-        if (startPosition === 'VERTICAL') {
+      if (startVertical === VERTICAL.TOP) {
+        if (startPosition === DIRECTION.VERTICAL) {
           Ys = [_yb - triangleWidthMiddle - _radium, _yb - triangleWidthMiddle, _yb - triangleWidthMiddle];
         } else {
           Ys = [_yt + self, _yt + self, _yt + self + _radium];
         }
       } else {
-        if (startPosition === 'VERTICAL') {
+        if (startPosition === DIRECTION.VERTICAL) {
           Ys = [_yt + triangleWidthMiddle + _radium, _yt + triangleWidthMiddle, _yt + triangleWidthMiddle];
         } else {
           Ys = [_yb - self, _yb - self, _yb - self - _radium];
@@ -315,7 +366,7 @@ class ArrowFollow extends Component<IProps, IState> {
         Y2s: [number, number, number];
 
       if (startHorizontal === HORIZONTAL.LEFT) {
-        if (startPosition === POSITION.VERTICAL) {
+        if (startPosition === DIRECTION.VERTICAL) {
           X1s = [_xl + self, _xl + self, _xl + self + _radium];
 
           X2s = [_xr - triangleWidthMiddle - _radium, _xr - triangleWidthMiddle, _xr - triangleWidthMiddle];
@@ -324,7 +375,7 @@ class ArrowFollow extends Component<IProps, IState> {
           X2s = [_xrMiddle, _xrMiddle, _xrMiddle + _radium];
         }
       } else {
-        if (startPosition === POSITION.VERTICAL) {
+        if (startPosition === DIRECTION.VERTICAL) {
           X1s = [_xr - self, _xr - self, _xr - self - _radium];
           X2s = [_xl + triangleWidthMiddle + _radium, _xl + triangleWidthMiddle, _xl + triangleWidthMiddle];
         } else {
@@ -334,7 +385,7 @@ class ArrowFollow extends Component<IProps, IState> {
       }
 
       if (startVertical === VERTICAL.TOP) {
-        if (startPosition === POSITION.VERTICAL) {
+        if (startPosition === DIRECTION.VERTICAL) {
           Y1s = [_ybMiddle - _radium, _ybMiddle, _ybMiddle];
           Y2s = [_ybMiddle, _ybMiddle, _ybMiddle + _radium];
         } else {
@@ -342,7 +393,7 @@ class ArrowFollow extends Component<IProps, IState> {
           Y2s = [_yb - triangleWidthMiddle - _radium, _yb - triangleWidthMiddle, _yb - triangleWidthMiddle];
         }
       } else {
-        if (startPosition === POSITION.VERTICAL) {
+        if (startPosition === DIRECTION.VERTICAL) {
           Y1s = [_ybMiddle + _radium, _ybMiddle, _ybMiddle];
           Y2s = [_ybMiddle, _ybMiddle, _ybMiddle - _radium];
         } else {
@@ -361,18 +412,18 @@ class ArrowFollow extends Component<IProps, IState> {
    * @param {POSITION} direction
    * @return {string}
    */
-  private _getEnd = ([endVertical, endHorizontal]: [v: VERTICAL, h: HORIZONTAL], direction: POSITION): string => {
+  private _getEnd = ([endVertical, endHorizontal]: [v: VERTICAL, h: HORIZONTAL], direction: IDirection): string => {
     const { _xl, _xr, _yt, _yb, _triangle } = this;
     const triangleWidthMiddle = _triangle.width / 2;
     let x: number, y: number;
     if (endHorizontal === HORIZONTAL.LEFT) {
-      if (direction === POSITION.HORIZONTAL) {
+      if (direction === DIRECTION.HORIZONTAL) {
         x = _xl + _triangle.height;
       } else {
         x = _xl + triangleWidthMiddle;
       }
     } else {
-      if (direction === POSITION.HORIZONTAL) {
+      if (direction === DIRECTION.HORIZONTAL) {
         x = _xr - _triangle.height;
       } else {
         x = _xr - triangleWidthMiddle;
@@ -380,13 +431,13 @@ class ArrowFollow extends Component<IProps, IState> {
     }
 
     if (endVertical === VERTICAL.TOP) {
-      if (direction === POSITION.HORIZONTAL) {
+      if (direction === DIRECTION.HORIZONTAL) {
         y = _yt + triangleWidthMiddle;
       } else {
         y = _yt + _triangle.height;
       }
     } else {
-      if (direction === POSITION.HORIZONTAL) {
+      if (direction === DIRECTION.HORIZONTAL) {
         y = _yb - triangleWidthMiddle;
       } else {
         y = _yb - _triangle.height;
@@ -402,9 +453,9 @@ class ArrowFollow extends Component<IProps, IState> {
    * @param {POSITION} endPosition
    * @return {number}
    */
-  private _arrowOrient = ([endVertical, endHorizontal]: [v: VERTICAL, h: HORIZONTAL], endPosition: POSITION): number => {
+  private _arrowOrient = ([endVertical, endHorizontal]: [v: VERTICAL, h: HORIZONTAL], endPosition: IDirection): number => {
     let orient: number;
-    if (endPosition === POSITION.VERTICAL) {
+    if (endPosition === DIRECTION.VERTICAL) {
       if (endVertical === VERTICAL.TOP) {
         orient = 90;
       } else {
@@ -421,8 +472,8 @@ class ArrowFollow extends Component<IProps, IState> {
   };
 
   public render = (): JSX.Element => {
-    const { width, height, color } = this.props;
-    const { size, viewBox, route, triangleOrient, margins } = this.state;
+    const { color } = this.props;
+    const { width, height, size, viewBox, route, triangleOrient, margins } = this.state;
     return (
       <View style={StyleSheet.flatten([{ width, height }, ...margins])}>
         <Svg width={width} height={height} viewBox={viewBox.join(' ')} fill={color ?? 'black'} strokeLinejoin={'round'} strokeLinecap={'butt'}>
@@ -449,5 +500,5 @@ class ArrowFollow extends Component<IProps, IState> {
   };
 }
 
-export { POSITION, HORIZONTAL, VERTICAL };
+export { DIRECTION, HORIZONTAL, VERTICAL, CORNER };
 export default ArrowFollow;

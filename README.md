@@ -27,7 +27,7 @@ expo install react-native-svg
 ## Usage
 
 ```tsx
-import { ArrowFollow } from "react-native-arrow-follow";
+import { ArrowFollow, CORNER, POSITION } from "react-native-arrow-follow";
 
 // ...
 
@@ -37,12 +37,12 @@ import { ArrowFollow } from "react-native-arrow-follow";
     color={"#000000"}
     size={14}
     start={{
-      corner: 'TOP_RIGHT',
-      direction: 'HORIZONTAL'
+      corner: CORNER.TOP_RIGHT,
+      direction: POSITION.HORIZONTAL
     }}
     end={{
-      corner: 'BOTTOM_LEFT',
-      direction: 'HORIZONTAL'
+      corner: CORNER.BOTTOM_LEFT,
+      direction: POSITION.HORIZONTAL
     }}
   />
 
@@ -60,8 +60,8 @@ A React node that will be most likely wrapping your whole app.
 | width      | width rectangle    |     *    |          | number                                   |
 | size       | size line          |          | 12       | number                                   |
 | color      | color code         |          | #000000  | string                                   |
-| start      | start arrow        |     *    |          | {corner:ICorner, direction: POSITION}    |
-| end        | end arrow          |     *    |          | {corner:ICorner, direction: POSITION}    |
+| start      | start arrow        |     *    |          | {corner:CORNER, direction: POSITION}    |
+| end        | end arrow          |     *    |          | {corner:CORNER, direction: POSITION}    |
 
 
 ```ts
@@ -70,23 +70,25 @@ type IProps = {
   width: number;
   size?: number;
   color?: string;
-  start: { corner: ICorner; direction: POSITION | keyof typeof POSITION };
-  end: { corner: ICorner; direction: POSITION | keyof typeof POSITION };
+  start: {
+    corner: CORNER | keyof typeof CORNER;
+    direction: POSITION | keyof typeof POSITION
+  };
+  end: {
+    corner: CORNER | keyof typeof CORNER;
+    direction: POSITION | keyof typeof POSITION
+  };
 };
 enum POSITION {
   HORIZONTAL = 'HORIZONTAL',
   VERTICAL = 'VERTICAL',
 }
-enum HORIZONTAL {
-  LEFT = 'LEFT',
-  RIGHT = 'RIGHT',
+enum CORNER {
+  TOP_LEFT = 'TOP_LEFT',
+  TOP_RIGHT = 'TOP_RIGHT',
+  BOTTOM_TOP = 'BOTTOM_TOP',
+  BOTTOM_BOTTOM = 'BOTTOM_BOTTOM',
 }
-enum VERTICAL {
-  TOP = 'TOP',
-  BOTTOM = 'BOTTOM',
-}
-
-export type ICorner = `${VERTICAL}_${HORIZONTAL}`;
 ```
 
 ## Contributing

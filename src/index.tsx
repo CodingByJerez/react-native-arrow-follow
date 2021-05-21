@@ -1,5 +1,10 @@
-import ArrowFollow, { POSITION, HORIZONTAL, VERTICAL, ICorner } from './ArrowFollow';
+import ArrowFollow, { DIRECTION, HORIZONTAL, VERTICAL, ICorner, IDirection, CORNER } from './ArrowFollow';
+export type { ICorner, IDirection };
 
-export type { ICorner };
-export { ArrowFollow, POSITION, HORIZONTAL, VERTICAL };
+/**
+ * @deprecated Change for: "DIRECTION"
+ */
+const POSITION = DIRECTION;
+
+export { ArrowFollow, DIRECTION, HORIZONTAL, VERTICAL, CORNER, POSITION };
 export default ArrowFollow;
