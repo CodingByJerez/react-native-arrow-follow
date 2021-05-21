@@ -71,23 +71,26 @@ type IProps = {
   size?: number;
   color?: string;
   start: {
-    corner: CORNER | keyof typeof CORNER;
-    direction: POSITION | keyof typeof POSITION
+    corner: ICorner;
+    direction: IDirection
   };
   end: {
-    corner: CORNER | keyof typeof CORNER;
-    direction: POSITION | keyof typeof POSITION
+    corner: ICorner;
+    direction: IDirection
   };
 };
-enum POSITION {
+type ICorner = CORNER | keyof typeof CORNER; //`${VERTICAL}_${HORIZONTAL}`;
+type IDirection = DIRECTION | keyof typeof DIRECTION;
+
+enum DIRECTION {
   HORIZONTAL = 'HORIZONTAL',
   VERTICAL = 'VERTICAL',
 }
 enum CORNER {
   TOP_LEFT = 'TOP_LEFT',
   TOP_RIGHT = 'TOP_RIGHT',
-  BOTTOM_TOP = 'BOTTOM_TOP',
-  BOTTOM_BOTTOM = 'BOTTOM_BOTTOM',
+  BOTTOM_LEFT = 'BOTTOM_LEFT',
+  BOTTOM_RIGHT = 'BOTTOM_RIGHT',
 }
 ```
 
