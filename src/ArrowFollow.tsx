@@ -138,6 +138,7 @@ class ArrowFollow extends Component<IProps, IState> {
    * @param {VERTICAL} endVertical
    * @param {HORIZONTAL} endHorizontal
    * @param {POSITION} endPosition
+   * @param width
    * @return {any[]}
    */
   private _getMarginView = (
@@ -217,32 +218,32 @@ class ArrowFollow extends Component<IProps, IState> {
     const self = _triangle.width / 5;
     let x: number, y: number;
     if (startHorizontal === endHorizontal) {
-      x = startHorizontal === 'LEFT' ? _xl + triangleWidthMiddle : _xr - triangleWidthMiddle;
-      y = startVertical === 'TOP' ? _yt : _yb;
+      x = startHorizontal === HORIZONTAL.LEFT ? _xl + triangleWidthMiddle : _xr - triangleWidthMiddle;
+      y = startVertical === VERTICAL.TOP ? _yt : _yb;
     } else if (startVertical === endVertical) {
-      x = startHorizontal === 'LEFT' ? _xl : _xr;
-      y = startVertical === 'TOP' ? _yt + triangleWidthMiddle : _yb - triangleWidthMiddle;
+      x = startHorizontal === HORIZONTAL.LEFT ? _xl : _xr;
+      y = startVertical === VERTICAL.TOP ? _yt + triangleWidthMiddle : _yb - triangleWidthMiddle;
     } else {
-      if (startHorizontal === 'LEFT') {
+      if (startHorizontal === HORIZONTAL.LEFT) {
         x = _xl;
-        if (startPosition === 'VERTICAL') {
+        if (startPosition === POSITION.VERTICAL) {
           x += self;
         }
       } else {
         x = _xr;
-        if (startPosition === 'VERTICAL') {
+        if (startPosition === POSITION.VERTICAL) {
           x -= self;
         }
       }
 
-      if (startVertical === 'TOP') {
+      if (startVertical === VERTICAL.TOP) {
         y = _yt;
-        if (startPosition === 'HORIZONTAL') {
+        if (startPosition === POSITION.HORIZONTAL) {
           y += self;
         }
       } else {
         y = _yb;
-        if (startPosition === 'HORIZONTAL') {
+        if (startPosition === POSITION.HORIZONTAL) {
           y -= self;
         }
       }
@@ -366,7 +367,7 @@ class ArrowFollow extends Component<IProps, IState> {
     let x: number, y: number;
     if (endHorizontal === HORIZONTAL.LEFT) {
       if (direction === POSITION.HORIZONTAL) {
-        x = _xl + _triangle.height; //size * 3;
+        x = _xl + _triangle.height;
       } else {
         x = _xl + triangleWidthMiddle;
       }
