@@ -27,7 +27,7 @@ expo install react-native-svg
 ## Usage
 
 ```tsx
-import { ArrowFollow, CORNER, POSITION } from "react-native-arrow-follow";
+import { ArrowFollow, CORNER, DIRECTION } from "react-native-arrow-follow";
 
 // ...
 
@@ -38,11 +38,11 @@ import { ArrowFollow, CORNER, POSITION } from "react-native-arrow-follow";
     size={14}
     start={{
       corner: CORNER.TOP_RIGHT,
-      direction: POSITION.HORIZONTAL
+      direction: DIRECTION.HORIZONTAL
     }}
     end={{
       corner: CORNER.BOTTOM_LEFT,
-      direction: POSITION.HORIZONTAL
+      direction: DIRECTION.HORIZONTAL
     }}
   />
 
