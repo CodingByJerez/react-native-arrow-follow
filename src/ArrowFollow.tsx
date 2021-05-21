@@ -113,7 +113,7 @@ class ArrowFollow extends Component<IProps, IState> {
     const _start: [v: VERTICAL, h: HORIZONTAL] = props.start.corner.split('_') as unknown as [v: VERTICAL, h: HORIZONTAL];
     const _end: [v: VERTICAL, h: HORIZONTAL] = props.end.corner.split('_') as unknown as [v: VERTICAL, h: HORIZONTAL];
 
-    const { width, height } = this._geCropView(props, _start);
+    const { width, height } = this._geCropView(props, _start, _end);
 
     const //
       aspectRatio: IState['aspectRatio'] = height / width,
@@ -140,9 +140,15 @@ class ArrowFollow extends Component<IProps, IState> {
    * @param {IProps} props
    * @param {VERTICAL} startVertical
    * @param {HORIZONTAL} startHorizontal
+   * @param {VERTICAL} endVertical
+   * @param {HORIZONTAL} endHorizontal
    * @return {{width:number, height:number}}
    */
-  private _geCropView = (props: IProps, [startVertical, startHorizontal]: [v: VERTICAL, h: HORIZONTAL]): { width: number; height: number } => {
+  private _geCropView = (
+    props: IProps,
+    [startVertical, startHorizontal]: [v: VERTICAL, h: HORIZONTAL],
+    [endVertical, endHorizontal]: [v: VERTICAL, h: HORIZONTAL]
+  ): { width: number; height: number } => {
     const size = ((1000 / props.width) * (props.size ?? 12)) / 2;
     const triangleWidth = ((size * 3) / 1000) * props.width;
     const triangleWidthMiddle = triangleWidth / 2;
@@ -171,10 +177,18 @@ class ArrowFollow extends Component<IProps, IState> {
         }
       }
     } else {
-      if (props.start.direction === DIRECTION.HORIZONTAL) {
-        dimensionsView.height += triangleWidthMiddle;
+      if (startVertical === endVertical || startHorizontal === endHorizontal) {
+        if (props.start.direction === DIRECTION.HORIZONTAL) {
+          dimensionsView.height += triangleWidthMiddle;
+        } else {
+          dimensionsView.width += triangleWidthMiddle;
+        }
       } else {
-        dimensionsView.width += triangleWidthMiddle;
+        if (props.start.direction === DIRECTION.HORIZONTAL) {
+          dimensionsView.height += triangleWidthMiddle + self / 2;
+        } else {
+          dimensionsView.width += triangleWidthMiddle + self / 2;
+        }
       }
     }
 
@@ -225,7 +239,7 @@ class ArrowFollow extends Component<IProps, IState> {
           margins.push({ left: -self });
         }
         if (startVertical === VERTICAL.TOP) {
-          margins.push({ top: -self });
+          // margins.push({ top: -self });
         } else {
           margins.push({ top: -triangleWidthMiddle });
         }
