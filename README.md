@@ -60,8 +60,8 @@ A React node that will be most likely wrapping your whole app.
 | width      | width rectangle    |     *    |          | number                                   |
 | size       | size line          |          | 12       | number                                   |
 | color      | color code         |          | #000000  | string                                   |
-| start      | start arrow        |     *    |          | {corner:CORNER, direction: POSITION}    |
-| end        | end arrow          |     *    |          | {corner:CORNER, direction: POSITION}    |
+| start      | start arrow        |     *    |          | {corner:CORNER, direction: DIRECTION}    |
+| end        | end arrow          |     *    |          | {corner:CORNER, direction: DIRECTION}    |
 
 
 ```ts
