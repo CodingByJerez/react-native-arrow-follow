@@ -1,6 +1,6 @@
 {
   "name": "react-native-arrow-follow",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Arrow follow type schema in SVG ",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
